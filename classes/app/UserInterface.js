@@ -327,13 +327,15 @@ class UserInterface {
   }
 
   #update_setLocationInfo() {
+	// DEBUG LOCAL TIME
     console.log(
-      "Updating location info for:",
+      "Updating Local Time:",
       convertHoursToTimeString(
         Settings.activeLocation.LOCAL_TIME / 60 / 60,
         false,
       ),
     );
+	// END DEBUG LOCAL TIME
     if (
       Settings.activeLocation.ILLUMINATION_STATUS === "Polar Day" ||
       Settings.activeLocation.ILLUMINATION_STATUS === "Polar Night" ||
