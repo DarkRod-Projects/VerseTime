@@ -10,6 +10,12 @@ import Star from "../Star.js";
 import CelestialBody from "../CelestialBody.js";
 import Location from "../Location.js";
 import Wormhole from "../Wormhole.js";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class Database {
   constructor() {
@@ -32,22 +38,37 @@ class Database {
   }
 
   static async fetchCSV(url) {
-    let csvString = null;
+    // Vérifier si on est en environnement Node.js
+    const isNode =
+      typeof process !== "undefined" &&
+      process.versions &&
+      process.versions.node;
 
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(
-          `Error fetching CSV!\nURL: ${url}\nSTATUS: ${response.status}`,
-        );
+    if (isNode) {
+      // Mode Node.js - utiliser fs
+      try {
+        // Résoudre le chemin absolu
+        const filePath = path.resolve(__dirname, "../../", url);
+        const csvString = fs.readFileSync(filePath, "utf8");
+        return Database.#parseCSV(csvString);
+      } catch (error) {
+        throw new Error(`Error reading CSV file: ${error.message}`);
       }
-      csvString = await response.text();
-    } catch (error) {
-      throw new Error(`Error fetching CSV:\n${error}`);
+    } else {
+      // Mode navigateur - utiliser fetch
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(
+            `Error fetching CSV!\nURL: ${url}\nSTATUS: ${response.status}`,
+          );
+        }
+        const csvString = await response.text();
+        return Database.#parseCSV(csvString);
+      } catch (error) {
+        throw new Error(`Error fetching CSV:\n${error}`);
+      }
     }
-
-    const data = Database.#parseCSV(csvString);
-    return data;
   }
 
   static #parseCSV(csvString) {
@@ -389,7 +410,7 @@ class Database {
 const DB = new Database();
 export default DB;
 
-window.showMissingData = () => {
-  DB.getLocationsWithoutImage();
-  DB.getLocationsWithoutWikiLink();
-};
+// window.showMissingData = () => {
+//   DB.getLocationsWithoutImage();
+//   DB.getLocationsWithoutWikiLink();
+// };

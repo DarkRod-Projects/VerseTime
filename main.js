@@ -1,26 +1,14 @@
 import Settings from "./classes/app/Preferences.js";
 import DB from "./classes/app/Database.js";
-import UI from "./classes/app/UserInterface.js";
+// NE PAS importer UI ici
 import { convertHoursToTimeString } from "./HelperFunctions.js";
 
-window.suppressReload = false;
-
-function update() {
-  if (DB.locations.length === 0) return;
-  UI.update();
-}
+export let verseData = null;
 
 // INIT
 async function startVerseTime() {
   await DB.createDatabase();
-  DB.locations.sort((a, b) => a.NAME.localeCompare(b.NAME));
-  UI.populateLocationList();
-  UI.setupEventListeners();
-
-  checkHash();
   Settings.load();
-
-  setInterval(update, 250);
 
   // DEBUG ALL DATA
   const data = {
@@ -47,30 +35,12 @@ async function startVerseTime() {
     ),
     illumination_status: Settings.activeLocation.ILLUMINATION_STATUS,
   };
-  console.log(data);
-  // END DEBUG ALL DATA
-}
-startVerseTime();
 
-function checkHash() {
-  const hash = window.location.hash;
-  if (hash === "") return;
-
-  const hashParts = hash.replace("#", "").replaceAll("_", " ").split("@");
-  const locationName = hashParts[0];
-
-  if (hashParts[1] !== undefined) {
-    UI.setCustomTime(hashParts[1], true);
-  }
-
-  UI.setMapLocation(locationName);
+  verseData = data;
+  return data;
 }
 
-window.addEventListener(
-  "hashchange",
-  () => {
-    if (window.suppressReload) return;
-    window.location.reload(true);
-  },
-  false,
-);
+// Exécuter l'initialisation
+await startVerseTime();
+
+export default verseData;

@@ -1,0 +1,23 @@
+{
+  "name": "versetime",
+  "version": "1.0.0",
+  "description": "In-game times for Star Citizen landing zones.\r Visit [this link](https://dydrmr.github.io/VerseTime/) to check it out.",
+  "homepage": "https://github.com/DarkRod-Projects/VerseTime#readme",
+  "bugs": {
+    "url": "https://github.com/DarkRod-Projects/VerseTime/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DarkRod-Projects/VerseTime.git"
+  },
+  "type": "module",
+  "main": "api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon api.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "three": "^0.185.1"
+  }
+}

@@ -1,6 +1,9 @@
 import CelestialBody from "../CelestialBody.js";
 import DB from "./Database.js";
-import UI from "./UserInterface.js";
+
+// Détection d'environnement
+const isBrowser =
+  typeof window !== "undefined" && typeof document !== "undefined";
 
 class Preferences {
   constructor() {
@@ -11,116 +14,167 @@ class Preferences {
     this.activeLocation = null;
     this.customTime = "now";
     this.useHdTextures = true;
+    this.ui = null;
+  }
+
+  // Méthode pour injecter l'UI (utilisée uniquement en navigateur)
+  setUI(uiInstance) {
+    this.ui = uiInstance;
+  }
+
+  // Obtenir localStorage de manière sécurisée
+  #getLocalStorage() {
+    if (!isBrowser) {
+      return null;
+    }
+    return window.localStorage;
   }
 
   load() {
-    const savedActiveLocation = String(
-      window.localStorage.getItem("activeLocation"),
-    );
+    if (!isBrowser) {
+      // Mode serveur : définir un emplacement par défaut
+      this.#setDefaultLocation();
+      return;
+    }
+
+    const localStorage = this.#getLocalStorage();
+    if (!localStorage) return;
+
+    const savedActiveLocation = String(localStorage.getItem("activeLocation"));
     if (window.location.hash === "" && savedActiveLocation !== "null") {
-      const result = UI.setMapLocation(savedActiveLocation);
-      if (!result) Settings.#setDefaultLocation();
+      // Vérifier si UI est disponible
+      if (this.ui && typeof this.ui.setMapLocation === "function") {
+        const result = this.ui.setMapLocation(savedActiveLocation);
+        if (!result) this.#setDefaultLocation();
+      } else {
+        // Fallback : définir directement l'emplacement
+        const location = DB.locations.find(
+          (loc) => loc.NAME === savedActiveLocation,
+        );
+        if (location) {
+          this.activeLocation = location;
+        } else {
+          this.#setDefaultLocation();
+        }
+      }
     } else if (window.location.hash === "") {
-      Settings.#setDefaultLocation();
+      this.#setDefaultLocation();
     }
 
-    const time24 = window.localStorage.getItem("time24");
+    const time24 = localStorage.getItem("time24");
     if (time24) {
-      Settings.use24HourTime = time24 === "false" ? false : true;
+      this.use24HourTime = time24 === "false" ? false : true;
     } else {
-      Settings.use24HourTime = true;
+      this.use24HourTime = true;
     }
 
-    const hdTextures = window.localStorage.getItem("hdTextures");
+    const hdTextures = localStorage.getItem("hdTextures");
     if (hdTextures) {
-      Settings.useHdTextures = hdTextures === "false" ? false : true;
+      this.useHdTextures = hdTextures === "false" ? false : true;
     } else {
-      Settings.useHdTextures = true;
+      this.useHdTextures = true;
     }
 
-    // LOCAL MAP
-    const mapPlanetTransparency = window.localStorage.getItem(
-      "mapPlanetTransparency",
-    );
-    const mapTextSize = window.localStorage.getItem("mapTextSize");
-    const mapGrid = window.localStorage.getItem("mapGrid");
-    const mapTerminator = window.localStorage.getItem("mapTerminator");
-    const mapOMs = window.localStorage.getItem("mapOMs");
-    const mapTimes = window.localStorage.getItem("mapTimes");
-    const mapStars = window.localStorage.getItem("mapStars");
+    // Charger les paramètres de l'UI uniquement si UI est disponible
+    if (this.ui) {
+      this.#loadMapSettings(localStorage);
+      this.#loadAtlasSettings(localStorage);
+    }
+  }
 
-    if (mapPlanetTransparency) {
-      UI.el("map-settings-planet-transparency").value = parseInt(
-        mapPlanetTransparency,
-      );
+  #loadMapSettings(localStorage) {
+    const mapPlanetTransparency = localStorage.getItem("mapPlanetTransparency");
+    const mapTextSize = localStorage.getItem("mapTextSize");
+    const mapGrid = localStorage.getItem("mapGrid");
+    const mapTerminator = localStorage.getItem("mapTerminator");
+    const mapOMs = localStorage.getItem("mapOMs");
+    const mapTimes = localStorage.getItem("mapTimes");
+    const mapStars = localStorage.getItem("mapStars");
+
+    if (mapPlanetTransparency && this.ui) {
+      const el = this.ui.el("map-settings-planet-transparency");
+      if (el) el.value = parseInt(mapPlanetTransparency);
     }
 
-    if (mapTextSize) {
-      UI.el("map-settings-text-size").value = parseFloat(mapTextSize);
-      document.documentElement.dispatchEvent(new Event("updateMapTextSize"));
+    if (mapTextSize && this.ui) {
+      const el = this.ui.el("map-settings-text-size");
+      if (el) {
+        el.value = parseFloat(mapTextSize);
+        if (isBrowser) {
+          document.documentElement.dispatchEvent(
+            new Event("updateMapTextSize"),
+          );
+        }
+      }
     }
 
-    if (mapGrid) {
-      UI.el("map-settings-show-grid").checked =
-        mapGrid === "false" ? false : true;
+    if (mapGrid && this.ui) {
+      const el = this.ui.el("map-settings-show-grid");
+      if (el) el.checked = mapGrid === "false" ? false : true;
     }
 
-    if (mapTerminator) {
-      UI.el("map-settings-show-terminator").checked =
-        mapTerminator === "false" ? false : true;
+    if (mapTerminator && this.ui) {
+      const el = this.ui.el("map-settings-show-terminator");
+      if (el) el.checked = mapTerminator === "false" ? false : true;
     }
 
-    if (mapOMs) {
-      UI.el("map-settings-show-orbitalmarkers").checked =
-        mapOMs === "false" ? false : true;
+    if (mapOMs && this.ui) {
+      const el = this.ui.el("map-settings-show-orbitalmarkers");
+      if (el) el.checked = mapOMs === "false" ? false : true;
     }
 
-    if (mapTimes) {
-      UI.el("map-settings-show-times").checked =
-        mapTimes === "false" ? false : true;
+    if (mapTimes && this.ui) {
+      const el = this.ui.el("map-settings-show-times");
+      if (el) el.checked = mapTimes === "false" ? false : true;
     }
 
-    if (mapStars) {
-      UI.el("map-settings-show-starfield").checked =
-        mapStars === "false" ? false : true;
+    if (mapStars && this.ui) {
+      const el = this.ui.el("map-settings-show-starfield");
+      if (el) el.checked = mapStars === "false" ? false : true;
+    }
+  }
+
+  #loadAtlasSettings(localStorage) {
+    const atlasLolli = localStorage.getItem("atlasLollipops");
+    const atlasWorm = localStorage.getItem("atlasWormholes");
+    const atlasAffil = localStorage.getItem("atlasAffiliation");
+    const atlasGrid = localStorage.getItem("atlasGrid");
+
+    if (atlasLolli && this.ui) {
+      const el = this.ui.el("atlas-settings-show-lollipops");
+      if (el) el.checked = atlasLolli === "false" ? false : true;
     }
 
-    // ATLAS
-    const atlasLolli = window.localStorage.getItem("atlasLollipops");
-    const atlasWorm = window.localStorage.getItem("atlasWormholes");
-    const atlasAffil = window.localStorage.getItem("atlasAffiliation");
-    const atlasGrid = window.localStorage.getItem("atlasGrid");
-
-    if (atlasLolli) {
-      UI.el("atlas-settings-show-lollipops").checked =
-        atlasLolli === "false" ? false : true;
+    if (atlasWorm && this.ui) {
+      const el = this.ui.el("atlas-settings-show-wormholes");
+      if (el) el.checked = atlasWorm === "false" ? false : true;
     }
 
-    if (atlasWorm) {
-      UI.el("atlas-settings-show-wormholes").checked =
-        atlasWorm === "false" ? false : true;
+    if (atlasAffil && this.ui) {
+      const el = this.ui.el("atlas-settings-show-affiliation");
+      if (el) el.checked = atlasAffil === "false" ? false : true;
     }
 
-    if (atlasAffil) {
-      UI.el("atlas-settings-show-affiliation").checked =
-        atlasAffil === "false" ? false : true;
-    }
-
-    if (atlasGrid) {
-      UI.el("atlas-settings-show-grid").checked =
-        atlasGrid === "false" ? false : true;
+    if (atlasGrid && this.ui) {
+      const el = this.ui.el("atlas-settings-show-grid");
+      if (el) el.checked = atlasGrid === "false" ? false : true;
     }
   }
 
   #setDefaultLocation() {
-    let result = DB.locations.filter((location) => {
+    const result = DB.locations.filter((location) => {
       return location.NAME === "Orison";
     });
-    Settings.activeLocation = result[0];
-    Settings.save("activeLocation", result[0].NAME);
+    if (result && result.length > 0) {
+      this.activeLocation = result[0];
+      if (isBrowser) {
+        this.save("activeLocation", result[0].NAME);
+      }
+    }
   }
 
   save(key, value) {
+    if (!isBrowser) return;
     window.localStorage.setItem(key, value);
   }
 
@@ -130,7 +184,7 @@ class Preferences {
       return null;
     }
 
-    const directory = Settings.useHdTextures ? "bodies-hd" : "bodies";
+    const directory = this.useHdTextures ? "bodies-hd" : "bodies";
     return `textures/${directory}/${body.NAME.toLowerCase()}.webp`;
   }
 
@@ -147,9 +201,6 @@ class Preferences {
       mainTexture = this.getCelestialBodyTexturePath(body);
     }
 
-    //const pathReflectCheck = `textures/bodies-reflection/${body.NAME.toLowerCase()}.webp`;
-    //const reflectionFileExists = this.imageExists(pathReflectCheck);
-    //const reflectTexture = reflectionFileExists ? pathReflectCheck : 'textures/bodies-reflection/no-reflection.webp';
     const reflectTexture = "textures/bodies-reflection/no-reflection.webp";
 
     return {
@@ -159,11 +210,18 @@ class Preferences {
   }
 
   imageExists(image_url) {
+    if (!isBrowser) {
+      // En mode serveur, toujours retourner true ou faire une vérification différente
+      return true;
+    }
+
     let http = new XMLHttpRequest();
     http.open("HEAD", image_url, false);
     try {
       http.send();
-    } catch (e) {}
+    } catch (e) {
+      return false;
+    }
     return http.status != 404;
   }
 }

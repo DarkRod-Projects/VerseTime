@@ -3,3 +3,4 @@
 .git/
 img/resources
 localServer.bat
+node_modules
