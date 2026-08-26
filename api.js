@@ -10,20 +10,6 @@ import { startVerseTime } from "./main.js";
 const app = express();
 const port = 3000;
 
-async function setDefaultLocation(locationName) {
-  await startVerseTime();
-  const location = getLocationByName(locationName);
-  if (location) {
-    Settings.activeLocation = location;
-    Settings.save("activeLocation", locationName);
-    console.log(`Default location set to: ${locationName}`);
-    return location;
-  } else {
-    console.error(`Location "${locationName}" not found`);
-    return null;
-  }
-}
-
 app.get("/", async (req, res) => {
   const locationName = req.query.location_name || "Area18";
   const location = getLocationByName(locationName);
