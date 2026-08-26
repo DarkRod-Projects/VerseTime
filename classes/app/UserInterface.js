@@ -327,15 +327,15 @@ class UserInterface {
   }
 
   #update_setLocationInfo() {
-	// DEBUG LOCAL TIME
-    console.log(
-      "Updating Local Time:",
-      convertHoursToTimeString(
-        Settings.activeLocation.LOCAL_TIME / 60 / 60,
-        false,
-      ),
-    );
-	// END DEBUG LOCAL TIME
+    // DEBUG LOCAL TIME
+    // console.log(
+    //   "Updating Local Time:",
+    //   convertHoursToTimeString(
+    //     Settings.activeLocation.LOCAL_TIME / 60 / 60,
+    //     false,
+    //   ),
+    // );
+    // END DEBUG LOCAL TIME
     if (
       Settings.activeLocation.ILLUMINATION_STATUS === "Polar Day" ||
       Settings.activeLocation.ILLUMINATION_STATUS === "Polar Night" ||
@@ -709,7 +709,7 @@ class UserInterface {
     UI.setText(
       "length-of-night",
       convertHoursToTimeString(
-        bod.ROTATION_RATE - loc.LENGTH_OF_DAYLIGHT * 24,
+        loc.ROTATION_RATE - loc.LENGTH_OF_DAYLIGHT * 24,
         true,
         false,
       ),
