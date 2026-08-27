@@ -61,8 +61,8 @@ app.get("/:city", async (req, res) => {
     ),
   };
 
-  const nextStarrise = new Date(data["nextStarRise"]);
-  const nextStarset = new Date(data["nextStarSet"]);
+  const nextStarrise = new Date(`1970-01-01T${data["nextStarRise"]}`);
+  const nextStarset = new Date(`1970-01-01T${data["nextStarSet"]}`);
 
   function formatTimeFrench(time) {
     if (!time) {
