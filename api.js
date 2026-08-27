@@ -12,7 +12,7 @@ const port = 3000;
 
 app.get("/", (req, res) => {
   res.status(200).json({
-    message: "VerseTime API is running. Use /:slug to get location data.",
+    message: "Use /:city to get location data. Example: /samson or /area18",
   });
 });
 
