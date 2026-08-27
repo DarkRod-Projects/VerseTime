@@ -4,9 +4,8 @@ import {
   convertHoursToTimeString,
 } from "./HelperFunctions.js";
 import { startVerseTime } from "./main.js";
-
-// const locationsData = await fetch("./data/locations.csv").then(res => res.json());
-// console.log("Locations data loaded:", locationsData);
+import fs from "fs";
+import path from "path";
 
 const app = express();
 const port = 3000;
@@ -17,11 +16,24 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/:slug", async (req, res) => {
-  let slug = req.params.slug;
-  const locationName = slug.replace(/-/g, " ");
-  const location = getLocationByName(locationName);
+app.get("/:city", async (req, res) => {
+  let city = req.params.city;
+  const csvFile = fs.readFileSync(path.join("./data/locations.csv"), "utf-8");
+  for (const line of csvFile.split("\n")) {
+    const columns = line.split(",");
+    if (columns[0].toLowerCase().includes(city.toLowerCase())) {
+      city = columns[0];
+    }
+  }
+
+  const location = getLocationByName(city);
   await startVerseTime();
+
+  if (!location) {
+    return res.status(200).json({
+      message: `Location ${city} not found`,
+    });
+  }
 
   const data = {
     name: location.NAME,
@@ -77,22 +89,16 @@ app.get("/:slug", async (req, res) => {
 
   let message;
   if (nextStarrise < nextStarset) {
-    message = `Sur ${locationName}, l'heure locale est ${data_fr.local_time} (en jeu). Le prochain lever de soleil est dans ${data_fr.next_starrise} (IRL). Le prochain coucher de soleil est dans ${data_fr.next_starset} (IRL). (Source: https://dydrmr.github.io/VerseTime/#${slug})`;
+    message = `Sur ${data.name}, l'heure locale est ${data_fr.local_time} (en jeu). Le prochain lever de soleil est dans ${data_fr.next_starrise} (IRL). Le prochain coucher de soleil est dans ${data_fr.next_starset} (IRL). (Source: https://dydrmr.github.io/VerseTime/#${city})`;
   } else {
-    message = `Sur ${locationName}, l'heure locale est ${data_fr.local_time} (en jeu). Le prochain coucher de soleil est dans ${data_fr.next_starset} (IRL). Le prochain lever de soleil est dans ${data_fr.next_starrise} (IRL). (Source: https://dydrmr.github.io/VerseTime/#${slug})`;
+    message = `Sur ${data.name}, l'heure locale est ${data_fr.local_time} (en jeu). Le prochain coucher de soleil est dans ${data_fr.next_starset} (IRL). Le prochain lever de soleil est dans ${data_fr.next_starrise} (IRL). (Source: https://dydrmr.github.io/VerseTime/#${city})`;
   }
 
-  if (!location) {
-    return res.status(200).json({
-      message: `Location ${locationName} not found`,
-    });
-  } else {
-    res.status(200).json({
-      message: message,
-      data: data,
-      data_fr: data_fr,
-    });
-  }
+  res.status(200).json({
+    message: message,
+    data: data,
+    data_fr: data_fr,
+  });
 });
 
 app.listen(port, () => {
