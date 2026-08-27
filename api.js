@@ -12,7 +12,9 @@ const port = 3000;
 
 app.get("/", (req, res) => {
   res.status(200).json({
-    message: "Use /:city to get location data. Example: /samson or /area18",
+    // message: "Use /:city to get location data. Example: /samson or /area18",
+    message:
+      "Utilisez /:city pour obtenir les données de localisation. Exemple: /samson ou /area18",
   });
 });
 
@@ -86,6 +88,8 @@ app.get("/:city", async (req, res) => {
     next_starrise: formatTimeFrench(data.nextStarRise),
     next_starset: formatTimeFrench(data.nextStarSet),
   };
+
+  city = city.replace(/\s+/g, "_");
 
   let message;
   if (nextStarrise < nextStarset) {
